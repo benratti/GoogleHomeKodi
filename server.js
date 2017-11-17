@@ -25,7 +25,7 @@ const validateRequest = function(req, res) {
         }
 
         if (req.body) {
-            requestToken = req.body.token;
+            requestToken = req.headers.token;
             if (!requestToken) {
                 reject('You should configure an access token, to secure your app.');
                 return;
@@ -45,6 +45,12 @@ const validateRequest = function(req, res) {
         reject('401 - Authentication failed');
     });
 };
+
+app.all(('/kodiManager'), function (request, response) {
+    validateRequest(request, response).then(() => {
+        Helper.kodiManage(request, response);
+    });
+});
 
 // Pause or Resume video player
 app.all('/playpause', function(request, response) {
