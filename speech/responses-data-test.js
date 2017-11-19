@@ -2,7 +2,7 @@ const responses = require('./responses.js');
 
 QUnit.test("GetReponse should return random value when value " ,(assert) => {
 
-    let response = responses.get("currentMovieDetailsFull",{ year: "2001", title: "Rio", directory: "Benjamin Ratti", hours: "12", minutes: "47" });
+    let response = responses.get("current-movie-details-full",{ year: "2001", title: "Rio", directory: "Benjamin Ratti", hours: "12", minutes: "47" });
 
     assert.ok( response.speech, "speech value must exist");
     assert.ok( response.display, "display value must exist");
@@ -27,7 +27,6 @@ QUnit.test("GetReponse should return random value when value " ,(assert) => {
     assert.ok(expectDisplays.contains(response.display),"le display ne correspond pas à celui attendu");
 
 });
-
 
 
 Array.prototype.contains = function(obj) {

@@ -4,6 +4,7 @@ const youtubeSearch = require('youtube-search');
 const Fuse = require('fuse.js');
 const DateHelper = require('./date/date.js');
 const ResponseMaker = require('./speech/responses.js');
+const URLEncode = require('urlencode');
 
 // Set option for fuzzy search
 const fuzzySearchOptions = {
@@ -36,7 +37,7 @@ const actionsHandler = {
         kodiLastMovies(request, response);
     },
     'movie.title': (request, response) => {
-        getMovieCard(request,response);
+        getMovieCard(request, response);
     }
 }
 
@@ -73,8 +74,7 @@ const kodeHasActivePlayer = (Kodi) => {
                 reject(error);
             });
     });
-
-}
+};
 
 const kodiCurrentPlay = (Kodi) => {
     return new Promise((resolve, reject) => {
@@ -82,7 +82,92 @@ const kodiCurrentPlay = (Kodi) => {
 
         Kodi.Player.GetItem({ // eslint-disable-line new-cap
             playerid: 1,
-            properties: ["year", "title", "album", "artist", "director"]
+//            properties: ["year", "title", "album", "artist", "director"]
+            properties:  [
+                "title",
+                "artist",
+                "albumartist",
+                "genre",
+                "year",
+                "rating",
+                "album",
+                "track",
+                "duration",
+                "comment",
+                "lyrics",
+                "musicbrainztrackid",
+                "musicbrainzartistid",
+                "musicbrainzalbumid",
+                "musicbrainzalbumartistid",
+                "playcount",
+                "fanart",
+                "director",
+                "trailer",
+                "tagline",
+                "plot",
+                "plotoutline",
+                "originaltitle",
+                "lastplayed",
+                "writer",
+                "studio",
+                "mpaa",
+                "cast",
+                "country",
+                "imdbnumber",
+                "premiered",
+                "productioncode",
+                "runtime",
+                "set",
+                "showlink",
+                "streamdetails",
+                "top250",
+                "votes",
+                "firstaired",
+                "season",
+                "episode",
+                "showtitle",
+                "thumbnail",
+                "file",
+                "resume",
+                "artistid",
+                "albumid",
+                "tvshowid",
+                "setid",
+                "watchedepisodes",
+                "disc",
+                "tag",
+                "art",
+                "genreid",
+                "displayartist",
+                "albumartistid",
+                "description",
+                "theme",
+                "mood",
+                "style",
+                "albumlabel",
+                "sorttitle",
+                "episodeguide",
+                "uniqueid",
+                "dateadded",
+                "channel",
+                "channeltype",
+                "hidden",
+                "locked",
+                "channelnumber",
+                "starttime",
+                "endtime",
+                "specialsortseason",
+                "specialsortepisode",
+                "compilation",
+                "releasetype",
+                "albumreleasetype",
+                "contributors",
+                "displaycomposer",
+                "displayconductor",
+                "displayorchestra",
+                "displaylyricist",
+                "userrating"
+            ]
         })
             .then((item) => {
                 if (!(item && item.result && item.result.item)) {
@@ -115,26 +200,93 @@ const kodiPlayerProperties = (Kodi) => {
             });
     });
 
-}
+};
+
+
+const moviestoListJSON = (movies) => {
+
+    let introduction = ResponseMaker.get("movies-suggestion-list",{});
+
+    let list = {
+        "speech": introduction.speech,
+        "messages": [
+            {
+                "type": "simple_response",
+                "platform": "google",
+                "textToSpeech": introduction.speech,
+                "displayText": introduction.display
+            },
+            {
+                //"type": "list_card",
+                "type":"carousel_card",
+                "platform": "google",
+                //"title": "Films",
+                "items": []
+            },
+            {
+                "type": 0,
+                "speech": "test"
+            }
+        ]
+    };
+
+    let speech = introduction;
+
+    for (var i = 0; i < movies.result.movies.length; i++) {
+        let movie = movies.result.movies[i];
+        console.log(movie);
+
+        let url = URLEncode.decode(movie.art.poster.split("image://")[1],"utf8");
+        url = url.substring(0, url.lastIndexOf('/'));
+
+        list.messages[1].items[i] = {
+            "optionInfo": {
+                "key": "regarder " + movie.title,
+                "synonyms": [
+                    movie.label
+                ]
+            },
+            "title": movie.title,
+            "description": movie.plot.substring(0,100),
+            "image": {
+                "url": url,
+                "accessibilityText": movie.title + " poster"
+            }
+        };
+
+        speech.speech = speech.speech + movie.title + " réalisé en " + movie.year + ", ";
+        //speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
+
+        list.messages[0].speech = speech.speech;
+
+
+    }
+
+    return list;
+
+
+};
 
 const kodiGetLastMovies = (Kodi) => {
     return new Promise((resolve, reject) => {
         Kodi.VideoLibrary.GetRecentlyAddedMovies({
-            properties: ["title", "year", "rating", "director"],
-            limits: {start: 0, end: 5},
+            properties: ["title", "year", "rating", "director","art","plot"],
+            limits: {start: 0, end: 10},
             sort: {order: "descending", method: "dateadded", ignorearticle: true}
         })
             .then((movies) => {
                 if (movies && movies.result && movies.result.movies) {
-                    let speech = "J'ai trouvé des films ajoutés récemment, il s'agit de : \n";
-                    for (var i = 0; i < movies.result.movies.length; i++) {
-                        let movie = movies.result.movies[i];
-                        console.log(movie);
-                        speech = speech + movie.title + " réalisé en " + movie.year + "\n";
+                    resolve(moviestoListJSON(movies));
 
-                    }
+                    //let speech = "J'ai trouvé des films ajoutés récemment, il s'agit de : \n";
+                    //for (var i = 0; i < movies.result.movies.length; i++) {
+                    //    let movie = movies.result.movies[i];
+                    //    console.log(movie);
+                    //    speech = speech + movie.title + " réalisé en " + movie.year + "\n";
 
-                    resolve(speech);
+                    //}
+
+                    //resolve(speech);
 
                 } else (
                     resolve()
@@ -154,7 +306,8 @@ const kodiLastMovies = (request, response) => {
 
     kodiGetLastMovies(Kodi)
         .then((speech) => {
-            sendResponse(speech, response);
+            response.json(speech);
+//            sendResponse(speech, response);
         })
         .catch((error) => {
             sendResponse("Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté");
@@ -181,32 +334,56 @@ const kodiCurrentMovieDetails = (request, response) => {
                                     if (properties.result && properties.result.time && properties.result.totaltime) {
                                         let endDate = DateHelper.getEndDate(properties.result.time, properties.result.totaltime);
 
-                                        sendResponse("Vous êtes en train de regarder "
-                                            + movie.result.item.title +
-                                            ". Ce film a été réalisé en " + movie.result.item.year + " par " + movie.result.item.director
-                                            + "\nIl se terminera à " + endDate.getHours() + " heures " + endDate.getMinutes(), response);
+                                        movie.result.item.hours = endDate.getHours();
+                                        movie.result.item.minutes = endDate.getMinutes();
+
+                                        let subtitle = movie.result.item.director + " - " + movie.result.item.year;
+
+                                        let url = URLEncode.decode(movie.result.item.art.fanart.split("image://")[1],"utf8");
+                                        url = url.substring(0, url.lastIndexOf('/'));
+
+                                        let card = {
+
+                                            speech: ResponseMaker.get("current-movie-details-full",movie.result.item).speech,
+                                            displayText: ResponseMaker.get("current-movie-details-simple", movie.result.item).display,
+                                            title: movie.result.item.title,
+                                            subtitle: subtitle,
+                                            formattedText: movie.result.item.plot.substring(0,175) + "[...]",
+                                            image : {
+                                                url: url,
+                                                accessibilityText: movie.result.item.title + " fanart"
+                                            }
+
+                                        };
+
+                                        sendBodyCardResponse(card, response);
+
+//                                        sendResponse(ResponseMaker.get("current-movie-details-full", movie.result.item), response);
 
                                     } else {
-                                        sendResponse("Vous êtes en train de regarder " + movie.result.item.title + ". Ce film a été réalisé en " + movie.result.item.year + " par " + movie.result.item.director, response);
+
+                                        sendResponse(ResponseMaker.get("current-movie-details-lite", movie.result.item), response);
                                     }
 
                                 })
                                 .catch((error) => {
-                                    sendResponse("Vous êtes en train de regarder " + movie.result.item.title + ". Ce film a été réalisé en " + movie.result.item.year + " par " + movie.result.item.director, response);
+                                    console.log(error);
+                                    sendResponse(ResponseMaker.get("current-movie-details-lite", movie.result.item), response);
                                 });
 
                         }
                     }).catch((error) => {
                     console.log(error);
-                    sendResponse("Oups, j'ai eu un problème. Je n'ai visiblement pas réussi à lancer le film", response);
+                    sendResponse(ResponseMaker.get("current-movie-details-error", {}), response);
 
                 });
 
             } else {
-                sendResponse("Il n'y a actuellement aucun film en cours de lecture sur votre média center", response);
+                sendResponse(ReponseMaker.get("current-movie-details-no-movie", {}), response);
             }
         }).catch((error) => {
-
+            console.log(error);
+            sendResponse(ResponseMaker.get("current-movie-details-error", {}), response);
     });
 
 
@@ -704,35 +881,61 @@ exports.kodiSeek = (request, response) => { // eslint-disable-line no-unused-var
     });
 };
 
+
 const getMovieCard = (request, response) => {
 
-    response.
-
     response.json({
-        "speech": "",
-        "messages": [
-            {
-                type: "basic_card",
-                platform: "google",
-                title: "Mon Super Movie",
-                subtitle: "Sub Movie title",
-                formattedText: "Un peu de blabla, ca ne fait pas de mal",
-                image: {
-                    url: "https://www.google.fr/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiE1KSA3LzXAhWFb1AKHbZaCi0QjRwIBw&url=http%3A%2F%2Fkodi.wiki%2Fview%2Fofficial%3Amedia_center_logos&psig=AOvVaw1Ds48VyfK6kMip8JVcxY5v&ust=1510702625735625"
+            speech: "Voici les informations que j'ai pu trouver",
+            messages: [
+                {
+                    type: "simple_response",
+                    platform: "google",
+                    textToSpeech: "Voici les informations que j'ai pu trouver"
                 },
-                buttons: []
-            },
-            {
-                type: 0,
-                speech: ""
-            }
-        ]
-    });
+                {
+                    type: "basic_card",
+                    platform: "google",
+                    title: "Ma Basic Card",
+                    subtitle: "Un super film",
+                    formattedText: "Un petit descriptif de mon film",
+                    image: {
+                        url: "http://www.cinezik.org/critiques/jaquettes/adopte-un-veuf.jpg"
+                    }
+                }
+            ]
+        }
+    );
 
     console.log("get movie card");
 
 };
 
+
+const sendBodyCardResponse = (bodyCard, response) => {
+   let responseJson = {
+       speech: bodyCard.speech,
+       messages: [
+           {
+               "type": "simple_response",
+               "platform": "google",
+               "textToSpeech": bodyCard.speech,
+               "displayText": bodyCard.displayText
+           },
+           {
+               type: "basic_card",
+               platform: "google",
+               title: bodyCard.title,
+               subtitle: bodyCard.subtitle,
+               formattedText: bodyCard.formattedText,
+               image: bodyCard.image
+
+           }
+       ]
+
+   };
+
+   response.json(responseJson);
+};
 
 // Function to send correctly formatted responses to Dialogflow which are then sent to the user
 const sendResponse = (responseToUser, response) => {
@@ -744,14 +947,25 @@ const sendResponse = (responseToUser, response) => {
         response.json(responseJson); // Send response to Dialogflow
     } else {
         // If the response to the user includes rich responses or contexts send them to Dialogflow
-        let responseJson = {};
+        let responseJson = {
+
+        };
 
         // If speech or displayText is defined, use it to respond (if one isn't defined use the other's value)
         responseJson.speech = responseToUser.speech || responseToUser.displayText;
-        responseJson.displayText = responseToUser.displayText || responseToUser.speech;
+        responseJson.messages = [{
+            "type": "simple_response",
+            "platform": "google",
+            "textToSpeech": responseToUser.speech || responseToUser.display,
+            "displayText": responseToUser.display || responseToUser.speech
+        }
+        ];
+
+
+        //responseJson.displayText = responseToUser.displayText || responseToUser.speech;
 
         // Optional: add rich messages for integrations (https://dialogflow.com/docs/rich-messages)
-        responseJson.data = responseToUser.richResponses;
+        //responseJson.data = responseToUser.richResponses;
 
         // Optional: add contexts (https://dialogflow.com/docs/contexts)
         responseJson.contextOut = responseToUser.outputContexts;
