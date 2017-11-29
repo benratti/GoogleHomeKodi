@@ -236,7 +236,7 @@ const moviestoListJSON = (movies) => {
         let movie = movies.result.movies[i];
         console.log(movie);
 
-        let url = URLEncode.decode(movie.art.poster.split("image://")[1],"utf8");
+        let url = URLEncode.decode(movie.art.fanart.split("image://")[1],"utf8");
         url = url.substring(0, url.lastIndexOf('/'));
 
         list.messages[1].items[i] = {
@@ -255,7 +255,7 @@ const moviestoListJSON = (movies) => {
         };
 
         speech.speech = speech.speech + movie.title + " réalisé en " + movie.year + ", ";
-        //speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
+        // speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
 
         list.messages[0].speech = speech.speech;
 
