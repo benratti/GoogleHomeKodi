@@ -21,6 +21,9 @@ const fuzzySearchOptions = {
 
 const actionsHandler = {
 
+    'movie.play.select': (request, response) => {
+        kodiPlaySelectMovie(request, response);
+    },
     'movie.play': (request, response) => {
         kodiPlayMovie(request, response);
     },
@@ -44,6 +47,7 @@ const actionsHandler = {
 exports.kodiManage = (request, response) => { // eslint-disable-line no-unused-vars
     let action = '';
 
+    console.log('request : ' + request);
     console.log('Manager request received');
     action = request.body.result.action;
     console.log('Action : ' + action);
@@ -241,7 +245,7 @@ const moviestoListJSON = (movies) => {
 
         list.messages[1].items[i] = {
             "optionInfo": {
-                "key": "regarder " + movie.title,
+                "key": movie.title,
                 "synonyms": [
                     movie.label
                 ]
@@ -254,10 +258,10 @@ const moviestoListJSON = (movies) => {
             }
         };
 
-        speech.speech = speech.speech + movie.title + " réalisé en " + movie.year + ", ";
+        speech.speech = speech.speech + movie.title; // + " réalisé en " + movie.year + ", ";
         // speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
 
-        list.messages[0].speech = speech.speech;
+        list.messages[0].textToSpeech = speech.speech;
 
 
     }
@@ -379,7 +383,7 @@ const kodiCurrentMovieDetails = (request, response) => {
                 });
 
             } else {
-                sendResponse(ReponseMaker.get("current-movie-details-no-movie", {}), response);
+                sendResponse(ResponseMaker.get("current-movie-details-no-movie", {}), response);
             }
         }).catch((error) => {
             console.log(error);
@@ -486,6 +490,37 @@ const kodiPlayMovie = (request, response) => { // eslint-disable-line no-unused-
     tryActivateTv(request, response);
 
     let movieTitle = request.body.result.parameters.title;
+//    let movieTitle = request.query.q.trim();
+    let Kodi = request.kodi;
+
+    console.log(`Movie request received to play "${movieTitle}"`);
+    kodiFindMovie(movieTitle, Kodi).then((data) => {
+        return Kodi.Player.Open({ // eslint-disable-line new-cap
+            item: {
+                movieid: data.movieid
+            }
+        });
+    }).catch((error) => {
+        sendResponse("Oups, j'ai eu un problème. Je n'ai visiblement pas réussi à lancer le film", response);
+        console.log(error);
+    });
+    sendResponse("Votre film devrait démarrer dans un instant", response);
+    //response.sendStatus(200);
+};
+
+const kodiPlaySelectMovie = (request, response) => { // eslint-disable-line no-unused-vars
+    tryActivateTv(request, response);
+
+    let contexts = request.body.result.contexts;
+    let movieTitle = "";
+
+    for ( var i = 0 ; i < contexts.length ; i++) {
+        if ( contexts[i].name == "actions_intent_option") {
+            movieTitle = contexts[i].parameters.OPTION;
+        }
+    }
+
+
 //    let movieTitle = request.query.q.trim();
     let Kodi = request.kodi;
 

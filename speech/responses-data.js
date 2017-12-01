@@ -88,7 +88,7 @@ module.exports = {
 
             }, {
                 speech: "J'ai quelques films à vous proposer.",
-                display: "J'ai quelques films à vous proposer",
+                display: "J'ai quelques films à vous proposer"
             }, {
                 speech: "Voici les films que je peux vous proposer",
                 display: "Voici les films que je peux vous proposer"
