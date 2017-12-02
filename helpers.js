@@ -298,7 +298,7 @@ const kodiGetMoviesByType = (Kodi, type) => {
         Kodi.VideoLibrary.GetMovies({
             properties: ["title", "year", "rating", "director","art","plot"],
             limits: {start: 0, end: 10},
-            sort: {order: "descending", method: "dateadded", ignorearticle: true},
+            sort: {order: "descending", method: "random", ignorearticle: true},
             filter:{operator: "is", "field": "genre","value": type}
         })
             .then((movies) => {
