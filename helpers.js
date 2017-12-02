@@ -20,7 +20,9 @@ const fuzzySearchOptions = {
 
 
 const actionsHandler = {
-
+    'movie.search.type': (request, response) => {
+        kodiSearchMoviesByType(request, response);
+    },
     'movie.play.trailer': (request, response) => {
         kodiPlayYoutube(request, response);
     },
@@ -291,6 +293,39 @@ const moviestoListJSON = (movies) => {
 
 };
 
+const kodiGetMoviesByType = (Kodi, type) => {
+    return new Promise((resolve, reject) => {
+        Kodi.VideoLibrary.GetMovies({
+            properties: ["title", "year", "rating", "director","art","plot"],
+            limits: {start: 0, end: 10},
+            sort: {order: "descending", method: "dateadded", ignorearticle: true},
+            filter:{operator: "is", "field": "genre","value": type}
+        })
+            .then((movies) => {
+                if (movies && movies.result && movies.result.movies) {
+                    resolve(moviestoListJSON(movies));
+
+                    //let speech = "J'ai trouvé des films ajoutés récemment, il s'agit de : \n";
+                    //for (var i = 0; i < movies.result.movies.length; i++) {
+                    //    let movie = movies.result.movies[i];
+                    //    console.log(movie);
+                    //    speech = speech + movie.title + " réalisé en " + movie.year + "\n";
+
+                    //}
+
+                    //resolve(speech);
+
+                } else (
+                    resolve()
+                );
+            }).catch((error) => {
+            reject(error);
+        });
+
+    });
+
+}
+
 const kodiGetLastMovies = (Kodi) => {
     return new Promise((resolve, reject) => {
         Kodi.VideoLibrary.GetRecentlyAddedMovies({
@@ -340,6 +375,25 @@ const kodiLastMovies = (request, response) => {
 
 }
 
+
+const kodiSearchMoviesByType = (request, response) => {
+    console.log('search movies request');
+    let movieType = request.body.result.parameters.type;
+
+
+    let Kodi = request.kodi;
+
+    kodiGetMoviesByType(Kodi, movieType)
+        .then((speech) => {
+            response.json(speech);
+//            sendResponse(speech, response);
+        })
+        .catch((error) => {
+            sendResponse(ResponseMaker.get("last-movie-not-found",[]));
+            //sendResponse("Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté");
+        });
+
+}
 
 const kodiCurrentMovieDetails = (request, response) => {
     console.log('Current Movie Details resquest');
