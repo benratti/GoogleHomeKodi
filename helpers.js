@@ -9,7 +9,7 @@ const URLEncode = require('urlencode');
 // Set option for fuzzy search
 const fuzzySearchOptions = {
     caseSensitive: false, // Don't care about case whenever we're searching titles by speech
-    includeScore: false, // Don't need the score, the first item has the highest probability
+    includeScore: true, // Don't need the score, the first item has the highest probability
     shouldSort: true, // Should be true, since we want result[0] to be the item with the highest probability
     threshold: 0.4, // 0 = perfect match, 1 = match all..
     location: 0,
@@ -21,6 +21,9 @@ const fuzzySearchOptions = {
 
 const actionsHandler = {
 
+    'movie.play.trailer': (request, response) => {
+        kodiPlayYoutube(request, response);
+    },
     'movie.play.select': (request, response) => {
         kodiPlaySelectMovie(request, response);
     },
@@ -240,8 +243,15 @@ const moviestoListJSON = (movies) => {
         let movie = movies.result.movies[i];
         console.log(movie);
 
-        let url = URLEncode.decode(movie.art.fanart.split("image://")[1],"utf8");
-        url = url.substring(0, url.lastIndexOf('/'));
+        let url;
+        if ( movie.art && movie.art.fanart ) {
+            url = URLEncode.decode(movie.art.fanart.split("image://")[1], "utf8");
+            url = url.substring(0, url.lastIndexOf('/'));
+        } else if ( movie.art && movie.art.poster ) {
+            url = URLEncode.decode(movie.art.poster.split("image://")[1], "utf8");
+            url = url.substring(0, url.lastIndexOf('/'));
+        }
+
 
         list.messages[1].items[i] = {
             "optionInfo": {
@@ -258,13 +268,23 @@ const moviestoListJSON = (movies) => {
             }
         };
 
-        speech.speech = speech.speech + movie.title; // + " réalisé en " + movie.year + ", ";
-        // speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
+        if ((i < 5 && i < (movies.result.movies.length - 1)) || movies.result.movies.length == 1 ) {
+            speech.speech = speech.speech + " " + movie.title + ", "; // + " réalisé en " + movie.year + ", ";
+            // speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
+        }
 
-        list.messages[0].textToSpeech = speech.speech;
-
+        if ( i == 5 || ( i < 5 && i == (movies.result.movies.length - 1) && i > 0 ) ) {
+                speech.speech = speech.speech + "et " + movie.title; // + " réalisé en " + movie.year + ", ";
+                // speech.display = speech.speechDisplay + movie.title + " réalisé en " + movie.year + ", ";
+        }
 
     }
+
+    if ( movies.result.movies.length > 5) {
+        speech.speech = speech.speech + ResponseMaker.get("other-movies",{}).speech;
+    }
+
+    list.messages[0].textToSpeech = "<speak>" + speech.speech + "</speak>";
 
     return list;
 
@@ -314,7 +334,8 @@ const kodiLastMovies = (request, response) => {
 //            sendResponse(speech, response);
         })
         .catch((error) => {
-            sendResponse("Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté");
+            sendResponse(ResponseMaker.get("last-movie-not-found",[]));
+            //sendResponse("Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté");
         });
 
 }
@@ -472,6 +493,10 @@ const kodiFindMovie = (movieTitle, Kodi) => {
 
                 // If there's a result
                 if (searchResult.length > 0) {
+                    for ( var i = 0; i < searchResult.length; i++ ) {
+                        console.log('Movie suggested: ' + searchResult[i].label);
+                    }
+
                     let movieFound = searchResult[0];
 
                     console.log(`Found movie "${movieFound.label}" (${movieFound.movieid})`);
@@ -873,8 +898,8 @@ exports.kodiPlayChannelByNumber = (request, response) => { // eslint-disable-lin
     kodiPlayChannel(request, response, pvrFuzzySearchOptions);
 };
 
-exports.kodiPlayYoutube = (request, response) => { // eslint-disable-line no-unused-vars
-    let searchString = request.query.q.trim();
+const kodiPlayYoutube = (request, response) => { // eslint-disable-line no-unused-vars
+    let searchString = request.body.result.parameters.title;
     let Kodi = request.kodi;
 
     if (!request.config.youtubeKey) {
@@ -904,6 +929,9 @@ exports.kodiPlayYoutube = (request, response) => { // eslint-disable-line no-unu
             });
         }
     });
+
+    sendResponse(ResponseMaker.get("movie-trailer", {}), response);
+
 };
 
 exports.kodiSeek = (request, response) => { // eslint-disable-line no-unused-vars

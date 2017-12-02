@@ -83,18 +83,72 @@ module.exports = {
         params: [],
         responses: [
             {
-                speech: "J'ai trouvé les films suivants, peut-être vont ils vous intéresser",
-                display: "J'ai trouvé les films suivants, peut-être vont ils vous intéresser",
+                speech: "J'ai trouvé les films suivants, peut-être vont ils vous intéresser.",
+                display: "J'ai trouvé les films suivants, peut-être vont ils vous intéresser.",
 
             }, {
                 speech: "J'ai quelques films à vous proposer.",
-                display: "J'ai quelques films à vous proposer"
+                display: "J'ai quelques films à vous proposer."
             }, {
-                speech: "Voici les films que je peux vous proposer",
-                display: "Voici les films que je peux vous proposer"
+                speech: "Voici les films que je peux vous proposer.",
+                display: "Voici les films que je peux vous proposer."
             }, {
                 speech: "J'ai trouvé quelques films succeptibles de vous intéresser.",
                 display: "J'ai trouvé quelques films succeptibles de vous intéresser."
+            }
+        ]
+    },
+    "movie-trailer": {
+        params: [],
+        responses: [
+            {
+                speech: "J'ai trouvé cette bande-annonce, elle devrait démarrer d'ici peut de temps",
+                display: "J'ai trouvé cette bande-annonce, elle devrait démarrer d'ici peut de temps",
+
+            }, {
+                speech: "Voici ce que j'ai pu trouver.",
+                display: "Voici ce que j'ai pu trouver."
+            }, {
+                speech: "êtes vous ? Votre bande-annonce va démarrer d'ici peut de temps.",
+                display: "Etes vous ? Votre bande-annonce va démarrer d'ici peut de temps."
+            }, {
+                speech: "Tada ! C'est parti.",
+                display: "C'est parti."
+            }
+        ]
+    },
+    "last-movie-not-found": {
+        params: [],
+        responses: [
+            {
+                speech: "Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté",
+                display: "Oups, je m'excuse, je n'ai pas réussi trouver les deniers films qui ont été ajouté",
+
+            }, {
+                speech: "Je suis confu, je n'ai pas trouvé les derniers films qui ont été ajouté",
+                display: "Je suis confu, je n'ai pas trouvé les derniers films qui ont été ajouté"
+            }, {
+                speech: "êtes vous prêt ? Votre bande-annonce va démarrer d'ici peut de temps.",
+                display: "Etes vous prêt ? Votre bande-annonce va démarrer d'ici peut de temps."
+            }, {
+                speech: "Tada ! C'est parti.",
+                display: "C'est parti."
+            }
+        ]
+    },
+    "other-movies": {
+        params: [],
+        responses: [
+            {
+                speech: ". et encore d'autres films si vous le souhaitez"
+
+            }, {
+                speech: ". et tout plein d'autres à vous proposer",
+            }, {
+                speech: ". <break time=\"1s\"/>Je m'arrête là sinon vous n'aller jamais regarder votre film"
+            }, {
+                speech: ". Voilà ! J'espère que vous allez trouver votre bonheur"
+
             }
         ]
     }
