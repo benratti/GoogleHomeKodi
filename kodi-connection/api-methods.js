@@ -46,5 +46,9 @@ module.exports = [
     {
         name: 'XBMC',
         methods: ['GetInfoBooleans', 'GetInfoLabels']
+    },
+    {
+        name: 'Settings',
+        methods: ['GetCategories', 'GetSections', 'GetSettings', 'GetSettingValue', 'ResetSettingValue', 'SetSettingValue']
     }
 ];

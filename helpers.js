@@ -11,7 +11,7 @@ const fuzzySearchOptions = {
     caseSensitive: false, // Don't care about case whenever we're searching titles by speech
     includeScore: true, // Don't need the score, the first item has the highest probability
     shouldSort: true, // Should be true, since we want result[0] to be the item with the highest probability
-    threshold: 0.4, // 0 = perfect match, 1 = match all..
+    threshold: 0.2, // 0 = perfect match, 1 = match all..
     location: 0,
     distance: 100,
     maxPatternLength: 64,
@@ -46,6 +46,12 @@ const actionsHandler = {
     },
     'movie.title': (request, response) => {
         getMovieCard(request, response);
+    },
+    'settings.audio.passthrough.enable': (request, response) => {
+        kodiEnablePassThrough(request, response);
+    },
+    'settings.audio.passthrough.disable': (request, response) => {
+        kodiDisablePassThrough(request, response);
     }
 }
 
@@ -468,6 +474,30 @@ const kodiCurrentMovieDetails = (request, response) => {
 
 };
 
+const kodiEnablePassThrough = (request, response ) => {
+
+    console.log('Enable Pass Through Setting');
+    let Kodi = request.kodi;
+
+    Kodi.Settings.SetSettingValue( // eslint-disable-line new-cap
+        ["audiooutput.passthrough",true]);
+    sendResponse(ResponseMaker.get("active-passtrough",[]), response);
+    //response.sendStatus(200);
+};
+
+
+const kodiDisablePassThrough = (request, response ) => {
+
+    console.log('Enable Pass Through Setting');
+    let Kodi = request.kodi;
+
+    Kodi.Settings.SetSettingValue( // eslint-disable-line new-cap
+        ["audiooutput.passthrough",false]);
+    sendResponse(ResponseMaker.get("desactive-passtrough",[]), response);
+    //response.sendStatus(200);
+};
+
+
 const kodiPlayPause = (request, response) => { // eslint-disable-line no-unused-vars
     console.log('Play/Pause request received');
     let Kodi = request.kodi;
@@ -478,6 +508,8 @@ const kodiPlayPause = (request, response) => { // eslint-disable-line no-unused-
     sendResponse("C'est bon, je viens de le faire", response);
     //response.sendStatus(200);
 };
+
+
 
 
 const kodiStop = (request, response) => { // eslint-disable-line no-unused-vars
@@ -956,35 +988,52 @@ const kodiPlayYoutube = (request, response) => { // eslint-disable-line no-unuse
     let searchString = request.body.result.parameters.title;
     let Kodi = request.kodi;
 
-    if (!request.config.youtubeKey) {
-        console.log('Youtube key missing. Configure using the env. variable YOUTUBE_KEY or the kodi-hosts.config.js.');
-    }
+    kodiFindTrailer(searchString, Kodi)
+        .then((movie) => {
+                Kodi.Player.Open({ // eslint-disable-line new-cap
+                    item: {
+                        file: movie.trailer
+                    }
+                });
+                sendResponse(ResponseMaker.get("movie-trailer", {}), response);
+            })
+        .catch((error) => {
+            console.log(error);
+            // on tente directement sur youtube
+            if (!request.config.youtubeKey) {
+                console.log('Youtube key missing. Configure using the env. variable YOUTUBE_KEY or the kodi-hosts.config.js.');
+            }
 
-    // Search youtube
-    console.log(`Searching youtube for ${searchString}`);
-    const opts = {
-        maxResults: 10,
-        key: request.config.youtubeKey
-    };
+            // Search youtube
+            console.log(`Searching youtube for ${searchString}`);
+            const opts = {
+                maxResults: 10,
+                key: request.config.youtubeKey
+            };
 
-    youtubeSearch(searchString, opts, (err, results) => {
-        if (err) {
-            console.log(err);
-            return;
-        }
+            youtubeSearch(searchString, opts, (err, results) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
 
-        // Play first result
-        if (results && results.length !== 0) {
-            console.log(`Playing youtube video: ${results[0].description}`);
-            return Kodi.Player.Open({ // eslint-disable-line new-cap
-                item: {
-                    file: `plugin://plugin.video.youtube/?action=play_video&videoid=${results[0].id}`
+                // Play first result
+                if (results && results.length !== 0) {
+                    console.log(`Playing youtube video: ${results[0].description}`);
+                    return Kodi.Player.Open({ // eslint-disable-line new-cap
+                        item: {
+                            file: `plugin://plugin.video.youtube/?action=play_video&videoid=${results[0].id}`
+                        }
+                    });
                 }
             });
-        }
+
+            sendResponse(ResponseMaker.get("movie-trailer", {}), response);
+
     });
 
-    sendResponse(ResponseMaker.get("movie-trailer", {}), response);
+
+
 
 };
 
@@ -1089,4 +1138,38 @@ const sendResponse = (responseToUser, response) => {
 
         response.json(responseJson); // Send response to Dialogflow
     }
+};
+
+const kodiFindTrailer = (movieTitle, Kodi) => {
+    return new Promise((resolve, reject) => {
+        Kodi.VideoLibrary.GetMovies(
+            {properties: ["title","trailer"]}
+        ) // eslint-disable-line new-cap
+            .then((movies) => {
+                if (!(movies && movies.result && movies.result.movies && movies.result.movies.length > 0)) {
+                    throw new Error('no results');
+                }
+
+                // Create the fuzzy search object
+                let fuse = new Fuse(movies.result.movies, fuzzySearchOptions);
+                let searchResult = fuse.search(movieTitle);
+
+                // If there's a result
+                if (searchResult.length > 0) {
+                    for ( var i = 0; i < searchResult.length; i++ ) {
+                        console.log('Movie suggested: ' + searchResult[i].label);
+                    }
+
+                    let movieFound = searchResult[0];
+
+                    console.log(`Found movie "${movieFound.label}" (${movieFound.movieid})`);
+                    resolve(movieFound);
+                } else {
+                    reject(`Couldn't find movie "${movieTitle}"`);
+                }
+            })
+            .catch((e) => {
+                reject(e);
+            });
+    });
 };

@@ -151,5 +151,44 @@ module.exports = {
 
             }
         ]
-    }
+    },
+    "active-passtrough":  {
+        params: [],
+        responses: [
+            {
+                speech: "Très bien, je laisse faire ce boulot à votre home cinéma"
+
+            }, {
+                speech: "Le son est maintenant traité par votre home cinéma",
+            }, {
+                speech: "Si le home cinéma peut faire mon boulot à ma place, je ne vais pas me plaindre. Je lui laisse faire avec plaisir"
+            }, {
+                speech: "Très bien, j'arrête sur le champ de m'occuper de l'audio."
+            }, {
+                speech: "Enfin ! C'est quand même son boulot à la base. Je vais pouvoir me reposer un peu."
+            }, {
+                speech: "Votre home cinéma s'occupe à présent du traitement de l'audio."
+
+            }
+        ]
+    },
+    "desactive-passtrough":  {
+        params: [],
+        responses: [
+            {
+                speech: "Très bien, je fais le nécessaire"
+            }, {
+                speech: "Le son est maintenant traité par votre serviteur"
+            }, {
+                speech: "Si le home cinéma peut faire mon boulot à ma place, je ne vais pas me plaindre. Je lui laisse faire avec plaisir"
+            }, {
+                speech: "Très bien, je m'occupe sur le champ du traitement de l'audio."
+            }, {
+                speech: "Comment ? C'est quand même le boulot de votre home cinéma à la base. Mais comme vous le souhaiter, je vais faire son boulot."
+            }, {
+                speech: "Votre home cinéma peut désormais se reposer."
+            }
+        ]
+    },
+
 }
