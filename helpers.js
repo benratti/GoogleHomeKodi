@@ -303,27 +303,21 @@ const kodiGetMoviesByType = (Kodi, type) => {
     return new Promise((resolve, reject) => {
         Kodi.VideoLibrary.GetMovies({
             properties: ["title", "year", "rating", "director","art","plot"],
-            limits: {start: 0, end: 10},
-            sort: {order: "descending", method: "random", ignorearticle: true},
-            filter:{operator: "is", "field": "genre","value": type}
+            limits: { start: 0, end: 10 },
+            sort: { order: "descending", method: "random", ignorearticle: true },
+            filter: { operator: "is", "field": "genre", "value": type }
         })
             .then((movies) => {
                 if (movies && movies.result && movies.result.movies) {
                     resolve(moviestoListJSON(movies));
-
-@  -&@oçà-$
-                    £%qw<
-                    v
-                } else (
-                    resolve()
-                );
+                } else {
+                    resolve();
+                }
             }).catch((error) => {
-            reject(error);
-        });
-
+                reject(error);
+            });
     });
-
-}
+};
 
 const kodiGetLastMovies = (Kodi) => {
     return new Promise((resolve, reject) => {
