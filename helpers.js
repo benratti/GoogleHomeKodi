@@ -311,16 +311,9 @@ const kodiGetMoviesByType = (Kodi, type) => {
                 if (movies && movies.result && movies.result.movies) {
                     resolve(moviestoListJSON(movies));
 
-                    //let speech = "J'ai trouvé des films ajoutés récemment, il s'agit de : \n";
-                    //for (var i = 0; i < movies.result.movies.length; i++) {
-                    //    let movie = movies.result.movies[i];
-                    //    console.log(movie);
-                    //    speech = speech + movie.title + " réalisé en " + movie.year + "\n";
-
-                    //}
-
-                    //resolve(speech);
-
+@  -&@oçà-$
+                    £%qw<
+                    v
                 } else (
                     resolve()
                 );
@@ -494,7 +487,7 @@ const kodiDisablePassThrough = (request, response ) => {
     Kodi.Settings.SetSettingValue( // eslint-disable-line new-cap
         ["audiooutput.passthrough",false]);
     sendResponse(ResponseMaker.get("desactive-passtrough",[]), response);
-    //response.sendStatus(200);
+    //res ponse.sendStatus(200);
 };
 
 

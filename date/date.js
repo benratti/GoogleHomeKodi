@@ -21,7 +21,7 @@ exports.getEndDate = (time,totaltime) => {
     let remainingTime = duration - currentTime;
     let date = new Date();
 
-    date.setSeconds(date.getSeconds() + remainingTime);
+    date.setSeconds(date.getSeconds() + remainingTime + 3600);
 
     return date;
 
